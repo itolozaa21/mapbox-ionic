@@ -14,10 +14,20 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 })
 export class MapPage implements OnInit {
 
+  showLayers: boolean = false;
+
   constructor(private _mapService: MapService) { 
     
   }
 
   ngOnInit() {
+  }
+
+  removeAllLayer(){
+    this._mapService.removeLayer();
+  }
+
+  repaint(){
+    this._mapService.repaint();
   }
 }

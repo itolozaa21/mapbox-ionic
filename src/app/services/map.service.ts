@@ -26,20 +26,19 @@ export class MapService {
     window.addEventListener('load', () => {
       this.buildMap();
       this.map.on('load', () => {
-        // this.getCordinates().subscribe((response) => {
-        //   response.forEach((origin, index) => {
-        //     //console.log(element);
-        //     const url = this.urls[Math.floor(Math.random() * this.urls.length)];
-        //     let layerId = `3d-model-${index}`;
-        //     const layer = this.buildCustomLayers([origin.lng, origin.lat], layerId, url);
-        //     this.map.addLayer(layer, 'waterway-label');
-        //   });
-        // });
+        this.getCordinates().subscribe((response) => {
+          response.forEach((origin, index) => {
+            //console.log(element);
+            const url = this.urls[Math.floor(Math.random() * this.urls.length)];
+            const layer = this.buildCustomLayers([origin.lng, origin.lat], url);
+            this.map.addLayer(layer, 'waterway-label');
+          });
+        });
       });
 
       this.map.on('click', (e) => {
-        const layer = this.buildCustomLayers([e.lngLat.lng, e.lngLat.lat]);
-        this.map.addLayer(layer, 'waterway-label');
+        // const layer = this.buildCustomLayers([e.lngLat.lng, e.lngLat.lat]);
+        // this.map.addLayer(layer, 'waterway-label');
       });
     });
   }
@@ -63,13 +62,17 @@ export class MapService {
     });
 
     this.map.addControl(new mapboxgl.NavigationControl());
+
+    setTimeout(() => {
+      this.map.resize()
+    }, 100);
   }
 
   buildCustomLayers(
     modelOrigin: number[],
     url: string = UrlsGlb.tipo2,
   ) {
-    let layerId = `3d-model-${this.layers.length}`;
+    let layerId = `model-${this.layers.length}`;
     console.log(layerId);
     
     const customLayer: mapboxgl.AnyLayer = {
@@ -122,5 +125,16 @@ export class MapService {
 
   public getCordinates() {
     return this.http.get<mapboxgl.LngLat[]>('assets/coordenadas.json');
+  }
+
+  public repaint(){
+    this.getCordinates().subscribe((response) => {
+      response.forEach((origin, index) => {
+        //console.log(element);
+        const url = this.urls[Math.floor(Math.random() * this.urls.length)];
+        const layer = this.buildCustomLayers([origin.lng, origin.lat], url);
+        this.map.addLayer(layer, 'waterway-label');
+      });
+    });
   }
 }

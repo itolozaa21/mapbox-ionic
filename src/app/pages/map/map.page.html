@@ -1,12 +1,33 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-label>Mapbox - Inkremental</ion-label>
-  </ion-toolbar>
-</ion-header>
+<ion-menu contentId="main-content">
+  <ion-header>
+    <ion-toolbar>
+      <ion-title>Listado</ion-title>
+      <ion-button
+        shape="round"
+        slot="end"
+        color="primary"
+        (click)="showLayers ? repaint() : removeAllLayer(); showLayers = !showLayers;"
+      >
+        <ion-icon [name]="showLayers ? 'eye' :'eye-off'" slot="end"></ion-icon>
+        {{showLayers ? 'Mostrar' : 'Ocultar'}}
+      </ion-button>
+    </ion-toolbar>
+  </ion-header>
+  <ion-content class="ion-padding">
+    <app-layers-list></app-layers-list>
+  </ion-content>
+</ion-menu>
 
-<ion-content>
-  <div class="map" id="map-box-container" tabindex="0" ></div>
-  <div style="width: 30%;">
-    <app-layers-list></app-layers-list> 
-  </div>
-</ion-content>
+<div class="ion-page" id="main-content">
+  <ion-header>
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-menu-button></ion-menu-button>
+      </ion-buttons>
+      <ion-title>Mapbox - Inkremental</ion-title>
+    </ion-toolbar>
+  </ion-header>
+  <ion-content>
+    <div class="map" id="map-box-container" tabindex="0"></div>
+  </ion-content>
+</div>

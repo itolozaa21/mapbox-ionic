@@ -1,0 +1,35 @@
+<ion-list [inset]="true" class="bg-transparent" *ngIf="layersList">
+  <ion-item>
+    <ion-label>
+      LISTADO DE LAYERS
+    </ion-label>
+    <ion-button 
+    shape="round" 
+    slot="end" 
+    color="danger"
+    (click)="removeLayer()">
+      <ion-icon
+        name="trash-outline"
+        slot="end"
+      ></ion-icon>
+    Remove All
+  </ion-button>
+  </ion-item>
+  <ion-item *ngFor="let item of layersList">
+    <ion-label>{{item.id | uppercase}} </ion-label
+    >
+    <ion-button 
+      shape="round" 
+      slot="end" 
+      color="danger"
+      (click)="removeLayer(item.id)">
+        <ion-icon
+          class="delete"
+          name="trash-outline"
+          slot="end"
+        ></ion-icon>
+      Remove
+    </ion-button>
+    
+  </ion-item>
+</ion-list>

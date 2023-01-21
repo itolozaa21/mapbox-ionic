@@ -1,10 +1,12 @@
 <ion-header>
   <ion-toolbar>
-    <button class="button" (click)="addLayer()">Agregar </button>
-    <button class="button" (click)="removeLayer()">Eliminar</button>
+    <ion-label>Mapbox - Inkremental</ion-label>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
-  <div class="map" id="map-box-container" tabindex="0"></div>
+  <div class="map" id="map-box-container" tabindex="0" ></div>
+  <div style="width: 30%;">
+    <app-layers-list></app-layers-list> 
+  </div>
 </ion-content>

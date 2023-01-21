@@ -7,14 +7,16 @@ import { IonicModule } from '@ionic/angular';
 import { MapPageRoutingModule } from './map-routing.module';
 
 import { MapPage } from './map.page';
+import { LayersListPageModule } from "../layers-list/layers-list.module";
 
 @NgModule({
-  imports: [
-    CommonModule,
-    FormsModule,
-    IonicModule,
-    MapPageRoutingModule
-  ],
-  declarations: [MapPage]
+    declarations: [MapPage],
+    imports: [
+        CommonModule,
+        FormsModule,
+        IonicModule,
+        MapPageRoutingModule,
+        LayersListPageModule
+    ]
 })
 export class MapPageModule {}

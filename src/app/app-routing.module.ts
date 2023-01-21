@@ -8,12 +8,16 @@ const routes: Routes = [
   },
   {
     path: '',
-    redirectTo: 'home',
+    redirectTo: 'map',
     pathMatch: 'full'
   },
   {
     path: 'map',
     loadChildren: () => import('./pages/map/map.module').then( m => m.MapPageModule)
+  },
+  {
+    path: 'layers-list',
+    loadChildren: () => import('./pages/layers-list/layers-list.module').then( m => m.LayersListPageModule)
   },
 ];
 

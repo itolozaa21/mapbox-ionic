@@ -1,173 +1,126 @@
+"use strict";
+import { HttpClient } from '@angular/common/http';
 import { Injectable, NgZone } from '@angular/core';
 import * as mapboxgl from 'mapbox-gl';
 import { environment } from 'src/environments/environment';
 import * as THREE from 'three';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { UrlsGlb } from '../models/url-glb';
-
-
+//declare var Threebox: any
+import * as Threebox  from 'threebox-plugin/src/Threebox'; 
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class MapService {
-  map!: mapboxgl.Map;
-  style = 'mapbox://styles/mapbox/dark-v11';
+  public layers: mapboxgl.AnyLayer[] = [];
 
-  camera: THREE.Camera = new THREE.Camera();
-  scene = new THREE.Scene();
-  renderer = new THREE.WebGLRenderer;
-  loader = new GLTFLoader;
-  directionalLight!: THREE.DirectionalLight;
-  directionalLight2!: THREE.DirectionalLight;
-
-  layers: mapboxgl.AnyLayer[] = [];
-
+  private map!: mapboxgl.Map;
+  private style = 'mapbox://styles/mapbox/dark-v11';
+  private urls = [UrlsGlb.tipo2];
   
-  constructor(private ngZone: NgZone) {
+  tb: any;
+
+  constructor(private ngZone: NgZone, private http: HttpClient) {
     (mapboxgl as typeof mapboxgl).accessToken = environment.MAPBOX_KEY;
-    //this.buildCustomLayers(UrlsGlb.tipo2,[-73.768153 , 6.958787])
-    //this.buildCustomLayers(UrlsGlb.tipo2,[-73.766000, 6.961963])
+    window.addEventListener('load', () => {
+      this.buildMap();
+      this.map.on('load', () => {
+        // this.getCordinates().subscribe((response) => {
+        //   response.forEach((origin, index) => {
+        //     //console.log(element);
+        //     const url = this.urls[Math.floor(Math.random() * this.urls.length)];
+        //     let layerId = `3d-model-${index}`;
+        //     const layer = this.buildCustomLayers([origin.lng, origin.lat], layerId, url);
+        //     this.map.addLayer(layer, 'waterway-label');
+        //   });
+        // });
+      });
 
-    //this.buildCustomLayers(UrlsGlb.tipo2,[-73.765062, 6.970345])
-  }
-
-
-
-
-  buildMap() {
-    this.map = new mapboxgl.Map({
-      container: 'map-box-container',
-      style: this.style,
-      zoom: 18,
-      center: [ -73.768153 , 6.958787],
-      pitch: 60,
-      antialias: true 
-    });
-    this.map.addControl(new mapboxgl.NavigationControl());
-  }
-
-  buildCustomLayers(url: string , modelOrigin:mapboxgl.LngLatLike  , modelAltitude: number = 0, modelRotate: any = [Math.PI / 2, 0, 0]){
-
-    console.log("modelOrigin",modelOrigin);
-    
-    const modelAsMercatorCoordinate = mapboxgl.MercatorCoordinate.fromLngLat(
-        modelOrigin ,
-        modelAltitude
-    );
-
-    // transformation parameters to position, rotate and scale the 3D model onto the map
-    const modelTransform = {
-        translateX: modelAsMercatorCoordinate.x,
-        translateY: modelAsMercatorCoordinate.y,
-        translateZ: 0,
-        rotateX: modelRotate[0],
-        rotateY: modelRotate[1],
-        rotateZ: modelRotate[2],
-        /* Since the 3D model is in real world meters, a scale transform needs to be
-        * applied since the CustomLayerInterface expects units in MercatorCoordinates.
-        */
-        scale: modelAsMercatorCoordinate.meterInMercatorCoordinateUnits()
-    };
-
-    const customLayer: mapboxgl.AnyLayer = {
-      id: `3d-model-${this.layers.length++}`,
-      type: 'custom',
-      renderingMode: '3d',
-    
-      onAdd: (map: mapboxgl.Map, gl: WebGL2RenderingContext) => {
-        console.log("ENTRAAAAA");
-        
-        const directionalLight = new THREE.DirectionalLight(0xffffff);
-              directionalLight.position.set(0, -70, 100).normalize();
-              console.log(directionalLight);
-              
-              this.scene.add(directionalLight);
-
-              const directionalLight2 = new THREE.DirectionalLight(0xffffff);
-              directionalLight2.position.set(0, 70, 100).normalize();
-              this.scene.add(directionalLight2);
-
-              // use the three.js GLTF loader to add the 3D model to the three.js scene
-              const loader = new GLTFLoader();
-              loader.load(
-                  url,
-                  (gltf: GLTF) => {
-                      this.scene.add(gltf.scene);
-                  }
-              );
-              this.map = map;
-
-              // use the Mapbox GL JS map canvas for three.js
-              this.renderer = new THREE.WebGLRenderer({
-                  canvas: map.getCanvas(),
-                  context: gl,
-                  antialias: true
-              });
-
-              this.renderer.autoClear = false;
-      },
-      render:  (gl: any, matrix: any) => {
-        const rotationX = new THREE.Matrix4().makeRotationAxis(
-          new THREE.Vector3(1, 0, 0),
-          modelTransform.rotateX
-        );
-        const rotationY = new THREE.Matrix4().makeRotationAxis(
-            new THREE.Vector3(0, 1, 0),
-            modelTransform.rotateY
-        );
-        const rotationZ = new THREE.Matrix4().makeRotationAxis(
-            new THREE.Vector3(0, 0, 1),
-            modelTransform.rotateZ
-        );
-
-        const m = new THREE.Matrix4().fromArray(matrix);
-        const l = new THREE.Matrix4()
-            .makeTranslation(
-              modelTransform.translateX,
-              modelTransform.translateY,
-              modelTransform.translateZ as any
-            )
-            .scale(
-                new THREE.Vector3(
-                  modelTransform.scale,
-                    -modelTransform.scale,
-                    modelTransform.scale
-                )
-            )
-            .multiply(rotationX)
-            .multiply(rotationY)
-            .multiply(rotationZ);
-
-        this.camera.projectionMatrix = m.multiply(l);
-        this.renderer.resetState();
-        this.renderer.render(this.scene, this.camera);
-        this.map.triggerRepaint();
-        },
-      }
-
-      console.log("CUSTOM", customLayer);
-      
-      this.layers.push(customLayer);
-      this.addALayer();
-  }
-
-  public addALayer(): void {
-    // We have to run this outside angular zones,
-    // because it could trigger heavy changeDetection cycles.
-    this.ngZone.runOutsideAngular(() => {
-      window.addEventListener('load', () => {
-        
-        
-        this.map.on('load', () => {
-          this.layers.forEach((layer) => this.map.addLayer(layer, 'waterway-label'))
-        });
+      this.map.on('click', (e) => {
+        const layer = this.buildCustomLayers([e.lngLat.lng, e.lngLat.lat]);
+        this.map.addLayer(layer, 'waterway-label');
       });
     });
   }
 
-  public removeLayer(id: string) {
-    this.map.removeLayer(id);
+  buildMap() {
+  
+    this.map = new mapboxgl.Map({
+      container: 'map-box-container',
+      style: this.style,
+      zoom: 15,
+      center: [-73.768153, 6.958787],
+      pitch: 68,
+      antialias: true,
+    });
+
+    this.tb = new Threebox(this.map, this.map.getCanvas().getContext('webgl'), {
+      defaultLights: true,
+      enableSelectingObjects: true,
+      enableTooltips: false,
+      multiLayer: false, // this will create a default custom layer that will manage a single tb.update
+    });
+
+    this.map.addControl(new mapboxgl.NavigationControl());
   }
 
+  buildCustomLayers(
+    modelOrigin: number[],
+    url: string = UrlsGlb.tipo2,
+  ) {
+    let layerId = `3d-model-${this.layers.length}`;
+    console.log(layerId);
+    
+    const customLayer: mapboxgl.AnyLayer = {
+      id: layerId,
+      type: 'custom',
+      renderingMode: '3d',
+      onAdd: (map: mapboxgl.Map, gl: WebGL2RenderingContext) => {
+        this.addModel(layerId,modelOrigin,url);
+      },
+      render: (gl: WebGL2RenderingContext, matrix: number[]) => {
+        this.tb.update();
+      },
+    };
+    this.layers.push(customLayer);
+    return customLayer;
+  }
+
+  addModel(layerId:string, origin: number[], url:string) {
+    let options = {
+      type: 'gltf',
+      obj: url, //model url
+      units: 'meters', //units in the default values are always in meters
+      scale: 1,
+      rotation: { x: 90, y: 180, z: 0 }, //default rotation
+      anchor: 'center',
+    };
+    this.tb.loadObj(options,(model: any) => {
+      model.setCoords(origin);
+      this.tb.add(model, layerId);
+    }); 
+  }
+
+  public removeLayer(id?: string) {
+    if (id) {
+      this.map.removeLayer(id);
+      this.tb.clear(id)
+      this.layers = this.layers.filter((layer) => layer.id != id);
+    } else {
+      this.layers.forEach((layer) => { 
+        this.map.removeLayer(layer.id);
+        this.tb.clear(id)
+      });
+      this.layers = [];
+    }
+  }
+
+  getRandomInt(max: number) {
+    return Math.floor(Math.random() * 100) + 100;
+  }
+
+  public getCordinates() {
+    return this.http.get<mapboxgl.LngLat[]>('assets/coordenadas.json');
+  }
 }

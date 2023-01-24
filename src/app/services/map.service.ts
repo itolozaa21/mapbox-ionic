@@ -1,119 +1,114 @@
-"use strict";
+'use strict';
 import { HttpClient } from '@angular/common/http';
 import { Injectable, NgZone } from '@angular/core';
 import * as mapboxgl from 'mapbox-gl';
 import { environment } from 'src/environments/environment';
-import * as THREE from 'three';
-import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { UrlsGlb } from '../models/url-glb';
-//declare var Threebox: any
-import * as Threebox  from 'threebox-plugin/src/Threebox'; 
-
+import * as Threebox from 'threebox-plugin/src/Threebox';
+interface ILayer {
+  id: string;
+}
 @Injectable({
   providedIn: 'root',
 })
 export class MapService {
-  public layers: mapboxgl.AnyLayer[] = [];
+  public layers: ILayer[] = [];
 
   private map!: mapboxgl.Map;
   private style = 'mapbox://styles/mapbox/dark-v11';
   private urls = [UrlsGlb.tipo2];
-  
+
   tb: any;
+  origin: number[] = [-73.768153, 6.958787];
+  popup!: mapboxgl.Popup;
 
   constructor(private ngZone: NgZone, private http: HttpClient) {
     (mapboxgl as typeof mapboxgl).accessToken = environment.MAPBOX_KEY;
     window.addEventListener('load', () => {
       this.buildMap();
       this.map.on('load', () => {
-        this.getCordinates().subscribe((response) => {
-          response.forEach((origin, index) => {
-            //console.log(element);
-            const url = this.urls[Math.floor(Math.random() * this.urls.length)];
-            const layer = this.buildCustomLayers([origin.lng, origin.lat], url);
-            this.map.addLayer(layer, 'waterway-label');
-          });
+        //this.animate()
+        this.repaint();
+        this.map.on('mouseover',(e) => {
+          console.log(this.map.getCanvas());
+          
+          
+          // const layer = this.buildCustomLayers([e.lngLat.lng, e.lngLat.lat], UrlsGlb.tipo1);
+          // this.map.addLayer(layer);
         });
       });
 
-      this.map.on('click', (e) => {
-        // const layer = this.buildCustomLayers([e.lngLat.lng, e.lngLat.lat]);
-        // this.map.addLayer(layer, 'waterway-label');
-      });
+      
     });
   }
 
   buildMap() {
-  
     this.map = new mapboxgl.Map({
       container: 'map-box-container',
       style: this.style,
       zoom: 15,
-      center: [-73.768153, 6.958787],
+      center: this.origin as mapboxgl.LngLatLike,
       pitch: 68,
       antialias: true,
     });
 
     this.tb = new Threebox(this.map, this.map.getCanvas().getContext('webgl'), {
       defaultLights: true,
-      enableSelectingObjects: true,
-      enableTooltips: false,
-      multiLayer: false, // this will create a default custom layer that will manage a single tb.update
+      enableSelectingObjects: true, //change this to false to disable 3D objects selection
+      enableDraggingObjects: true, //change this to false to disable 3D objects drag & move once selected
+      enableRotatingObjects: true, //change this to false to disable 3D objects rotation once selected
+      enableTooltips: true, // change this to false to disable default tooltips on fill-extrusion and 3D models
+      enableHelpTooltips: true, // remove this to disable default help tooltips for draggin, rotating and measure
     });
+    this.map.addControl(new mapboxgl.NavigationControl(), 'top-left');
 
-    this.map.addControl(new mapboxgl.NavigationControl());
+    this.popup = new mapboxgl.Popup(
+      {offset:[28, 0]}
+    ).setText(
+      'Construction on the Washington Monument began in 1848.'
+    );
 
+    
     setTimeout(() => {
-      this.map.resize()
+      this.map.resize();
     }, 100);
   }
 
-  buildCustomLayers(
-    modelOrigin: number[],
-    url: string = UrlsGlb.tipo2,
-  ) {
-    let layerId = `model-${this.layers.length}`;
-    console.log(layerId);
-    
-    const customLayer: mapboxgl.AnyLayer = {
-      id: layerId,
-      type: 'custom',
-      renderingMode: '3d',
-      onAdd: (map: mapboxgl.Map, gl: WebGL2RenderingContext) => {
-        this.addModel(layerId,modelOrigin,url);
-      },
-      render: (gl: WebGL2RenderingContext, matrix: number[]) => {
-        this.tb.update();
-      },
-    };
-    this.layers.push(customLayer);
-    return customLayer;
-  }
-
-  addModel(layerId:string, origin: number[], url:string) {
+  addModel(layerId: string, origin: number[], url: string) {
     let options = {
       type: 'gltf',
       obj: url, //model url
       units: 'meters', //units in the default values are always in meters
       scale: 1,
-      rotation: { x: 90, y: 180, z: 0 }, //default rotation
+      //rotation: { x: 65, y: 220, z: 0 },
+      rotation: { x: 90, y: 120, z: 0 }, //default  rotation
       anchor: 'center',
+      clone: false,
     };
-    this.tb.loadObj(options,(model: any) => {
+    this.tb.loadObj(options, (model: any) => {
       model.setCoords(origin);
+      //model.addEventListener('ObjectMouseOver', this.onObjectMouseOver, false);
+      //model.addTooltip('This is a custom tooltip', true);
+
+      model.castShadow = true;
       this.tb.add(model, layerId);
-    }); 
+    });
+    this.layers.push({ id: layerId });
   }
 
-  public removeLayer(id?: string) {
+  //actions to execute onObjectMouseOverVas
+  onObjectMouseOver(e) {
+    console.log('ObjectMouseOver: ', e);
+  }
+
+  public removeLayer(id?: string, layerId: string = '3d-model') {
     if (id) {
-      this.map.removeLayer(id);
-      this.tb.clear(id)
+      this.tb.clear(id);
       this.layers = this.layers.filter((layer) => layer.id != id);
     } else {
-      this.layers.forEach((layer) => { 
-        this.map.removeLayer(layer.id);
-        this.tb.clear(id)
+      this.map.removeLayer(layerId);
+      this.layers.forEach((layer) => {
+        this.tb.clear(id);
       });
       this.layers = [];
     }
@@ -127,14 +122,27 @@ export class MapService {
     return this.http.get<mapboxgl.LngLat[]>('assets/coordenadas.json');
   }
 
-  public repaint(){
-    this.getCordinates().subscribe((response) => {
-      response.forEach((origin, index) => {
-        //console.log(element);
-        const url = this.urls[Math.floor(Math.random() * this.urls.length)];
-        const layer = this.buildCustomLayers([origin.lng, origin.lat], url);
-        this.map.addLayer(layer, 'waterway-label');
-      });
-    });
+  public repaint() {
+    const layer: mapboxgl.CustomLayerInterface = {
+      id: '3d-model',
+      type: 'custom',
+      renderingMode: '3d',
+      onAdd: (map, mbxContext) => {
+        this.getCordinates().subscribe((response) => {
+          response.forEach((origin, index) => {
+            const url = this.urls[Math.floor(Math.random() * this.urls.length)];
+            this.addModel(`3d-model-${index}`, [origin.lng, origin.lat], url);
+          });
+        });
+      },
+      render: (gl, matrix) => {
+        this.tb.update();
+      },
+    };
+    this.map.addLayer(layer);
+  }
+
+  animate() {
+    requestAnimationFrame(this.animate.bind(this));
   }
 }

@@ -1,11 +1,11 @@
 <ion-menu contentId="main-content">
-  <ion-header>
-    <ion-toolbar>
+  <ion-header >
+    <ion-toolbar color="tertiary">
       <ion-title>Listado</ion-title>
       <ion-button
         shape="round"
         slot="end"
-        color="primary"
+        color="dark"
         (click)="showLayers ? repaint() : removeAllLayer(); showLayers = !showLayers;"
       >
         <ion-icon [name]="showLayers ? 'eye' :'eye-off'" slot="end"></ion-icon>
@@ -20,7 +20,7 @@
 
 <div class="ion-page" id="main-content">
   <ion-header>
-    <ion-toolbar>
+    <ion-toolbar color="tertiary">
       <ion-buttons slot="start">
         <ion-menu-button></ion-menu-button>
       </ion-buttons>

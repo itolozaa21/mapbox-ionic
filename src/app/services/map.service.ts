@@ -7,6 +7,7 @@ import { UrlsGlb } from '../models/url-glb';
 import * as Threebox from 'threebox-plugin/src/Threebox';
 import AnimatedPopup from 'mapbox-gl-animated-popup';
 import { animate } from '@angular/animations';
+import { Observable } from 'rxjs';
 interface ILayer {
   id: string;
 }
@@ -33,15 +34,18 @@ export class MapService {
         this.animate()
         this.repaint();
        
-        //let layersIds = this.layers.map((layer) => layer.id);
-        setTimeout(() => {
-          this.map.on('click',(e: any) => {
-            console.log(e);
-            
-            //console.log(e..);
-            
-          });
-        }, 1000);
+        var corr:any = [];
+        this.map.on('click',(e) => {
+          //this.addModel(`3d-model-${this.layers.length}`, [e.lngLat[0], e.lngLat[1]]  ,UrlsGlb.tipo2);
+          corr.push(e.lngLat)
+          console.clear()
+          console.log(JSON.stringify(corr));
+          console.log(corr.length);
+         
+          
+          //console.log(e..);
+          
+        });
         
         
       });
@@ -78,7 +82,7 @@ export class MapService {
 
     setTimeout(() => {
       this.map.resize();
-    }, 100);
+    }, 1000);
   }
 
   addModel(layerId: string, origin: number[], url: string) {
@@ -123,11 +127,16 @@ export class MapService {
   }
 
   getRandomInt(max: number) {
-    return Math.floor(Math.random() * 100) + 100;
+    return Math.floor(Math.random() * 10) + 10;
   }
 
   public getCordinates() {
-    return this.http.get<mapboxgl.LngLat[]>('assets/coordenadas.json');
+    return this.http.get<mapboxgl.LngLat[]>('assets/coordenadas3.json');
+  }
+
+  public save(user): Observable<any> {
+    const url = 'assets/coordenadas3.json';
+    return this.http.post<any>(url, user);
   }
 
   public repaint() {
@@ -137,6 +146,8 @@ export class MapService {
       renderingMode: '3d',
       onAdd: (map, mbxContext) => {
         this.getCordinates().subscribe((response) => {
+          console.log(response.length);
+          
           response.forEach((origin, index) => {
             const url = this.urls[Math.floor(Math.random() * this.urls.length)];
             this.addModel(`3d-model-${index}`, [origin.lng, origin.lat], url);

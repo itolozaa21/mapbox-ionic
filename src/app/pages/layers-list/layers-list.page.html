@@ -1,12 +1,12 @@
 <ion-list  class="bg-transparent" >
   <ion-item *ngFor="let item of layersList">
-    <ion-label>{{item.id | uppercase}} </ion-label
+    <ion-label>{{item | uppercase}} </ion-label
     >
     <ion-button 
       shape="round" 
       slot="end" 
       color="danger"
-      (click)="removeLayer(item.id)">
+      (click)="removeLayer(item)">
         <ion-icon
           class="delete"
           name="trash-outline"

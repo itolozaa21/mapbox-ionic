@@ -5,6 +5,8 @@ import * as mapboxgl from 'mapbox-gl';
 import { environment } from 'src/environments/environment';
 import { UrlsGlb } from '../models/url-glb';
 import * as Threebox from 'threebox-plugin/src/Threebox';
+import AnimatedPopup from 'mapbox-gl-animated-popup';
+import { animate } from '@angular/animations';
 interface ILayer {
   id: string;
 }
@@ -12,9 +14,10 @@ interface ILayer {
   providedIn: 'root',
 })
 export class MapService {
-  public layers: ILayer[] = [];
+  public layers: string[] = [];
 
   private map!: mapboxgl.Map;
+  
   private style = 'mapbox://styles/mapbox/dark-v11';
   private urls = [UrlsGlb.tipo2];
 
@@ -27,18 +30,21 @@ export class MapService {
     window.addEventListener('load', () => {
       this.buildMap();
       this.map.on('load', () => {
-        //this.animate()
+        this.animate()
         this.repaint();
-        this.map.on('mouseover',(e) => {
-          console.log(this.map.getCanvas());
-          
-          
-          // const layer = this.buildCustomLayers([e.lngLat.lng, e.lngLat.lat], UrlsGlb.tipo1);
-          // this.map.addLayer(layer);
-        });
+       
+        //let layersIds = this.layers.map((layer) => layer.id);
+        setTimeout(() => {
+          this.map.on('click',(e: any) => {
+            console.log(e);
+            
+            //console.log(e..);
+            
+          });
+        }, 1000);
+        
+        
       });
-
-      
     });
   }
 
@@ -62,13 +68,14 @@ export class MapService {
     });
     this.map.addControl(new mapboxgl.NavigationControl(), 'top-left');
 
-    this.popup = new mapboxgl.Popup(
-      {offset:[28, 0]}
-    ).setText(
-      'Construction on the Washington Monument began in 1848.'
-    );
+    //let popup = new  mapboxgl.Popup({closeButton: false}).setHTML(`<h6>HOLA</h6>`).setLngLat(this.origin as mapboxgl.LngLatLike).addTo(this.map);
+    // new mapboxgl.Marker({
+    //   color: 'red',
+    //   draggable: true
+    // }).setLngLat(this.origin as mapboxgl.LngLatLike)
+    // .setPopup(popup)
+    // .addTo(this.map).togglePopup();
 
-    
     setTimeout(() => {
       this.map.resize();
     }, 100);
@@ -88,12 +95,13 @@ export class MapService {
     this.tb.loadObj(options, (model: any) => {
       model.setCoords(origin);
       //model.addEventListener('ObjectMouseOver', this.onObjectMouseOver, false);
-      //model.addTooltip('This is a custom tooltip', true);
-
+      model.addTooltip('This is a custom tooltip', false);
+      //model.set({ rotation: { x: 0, y: 0, z: 11520 }, duration: 20000 });
       model.castShadow = true;
       this.tb.add(model, layerId);
     });
-    this.layers.push({ id: layerId });
+    
+    this.layers.push(layerId);
   }
 
   //actions to execute onObjectMouseOverVas
@@ -104,7 +112,7 @@ export class MapService {
   public removeLayer(id?: string, layerId: string = '3d-model') {
     if (id) {
       this.tb.clear(id);
-      this.layers = this.layers.filter((layer) => layer.id != id);
+      this.layers = this.layers.filter((layer) => layer != id);
     } else {
       this.map.removeLayer(layerId);
       this.layers.forEach((layer) => {
@@ -142,7 +150,10 @@ export class MapService {
     this.map.addLayer(layer);
   }
 
-  animate() {
-    requestAnimationFrame(this.animate.bind(this));
+  animate = function () {
+    console.log('s');
+    
+    requestAnimationFrame(animate);
+    //stats.update();
   }
 }

@@ -13,6 +13,7 @@
   },
   "private": true,
   "dependencies": {
+    "@angular/animations": "^15.1.2",
     "@angular/common": "^15.0.0",
     "@angular/core": "^15.0.0",
     "@angular/forms": "^15.0.0",
@@ -22,6 +23,7 @@
     "@ionic/angular": "^6.1.9",
     "ionicons": "^6.0.3",
     "mapbox-gl": "^2.11.1",
+    "mapbox-gl-animated-popup": "^0.4.0",
     "rxjs": "~7.5.0",
     "three": "^0.148.0",
     "tslib": "^2.3.0",

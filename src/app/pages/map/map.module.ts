@@ -8,7 +8,8 @@ import { MapPageRoutingModule } from './map-routing.module';
 
 import { MapPage } from './map.page';
 import { LayersListPageModule } from "../layers-list/layers-list.module";
-
+import { NgxMapboxGLModule } from 'ngx-mapbox-gl';
+import { environment } from 'src/environments/environment';
 @NgModule({
     declarations: [MapPage],
     imports: [
@@ -16,7 +17,10 @@ import { LayersListPageModule } from "../layers-list/layers-list.module";
         FormsModule,
         IonicModule,
         MapPageRoutingModule,
-        LayersListPageModule
+        LayersListPageModule,
+        NgxMapboxGLModule.withConfig({
+            accessToken:  environment.MAPBOX_KEY, // Optional, can also be set per map (accessToken input of mgl-map)
+        })
     ]
 })
 export class MapPageModule {}

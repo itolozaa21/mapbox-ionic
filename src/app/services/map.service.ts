@@ -2,66 +2,88 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, NgZone } from '@angular/core';
 import * as mapboxgl from 'mapbox-gl';
-import { environment } from 'src/environments/environment';
 import { UrlsGlb } from '../models/url-glb';
 import * as Threebox from 'threebox-plugin/src/Threebox';
-import AnimatedPopup from 'mapbox-gl-animated-popup';
-import { animate } from '@angular/animations';
 import { Observable } from 'rxjs';
-interface ILayer {
-  id: string;
-}
 @Injectable({
   providedIn: 'root',
 })
 export class MapService {
-  public layers: string[] = [];
 
-  private map!: mapboxgl.Map;
-  
-  private style = 'mapbox://styles/mapbox/dark-v11';
+  private tb: any;
   private urls = [UrlsGlb.tipo2];
+  private popup!: mapboxgl.Popup;
 
-  tb: any;
-  origin: number[] = [-73.768153, 6.958787];
-  popup!: mapboxgl.Popup;
+  public layers: string[] = [];
+  public style = 'mapbox://styles/mapbox/dark-v11';
+  public map!: mapboxgl.Map;
+  public coordenadas: mapboxgl.LngLat[] = [];
+  public origin: number[] = [-73.768153, 6.958787];
+  
+  public sourceCluster:any = {
+    type: 'geojson',
+    cluster: true,
+    clusterMaxZoom: 14, // Max zoom to cluster points on
+    clusterRadius: 50,
+    data: {
+      type: 'FeatureCollection',
+      features: [],
+    },
+  };
+
+  public clusterlayer: any = {
+    id: 'clusters',
+    type: 'circle',
+    source: 'sourceCluster',
+    filter: ['has', 'point_count'],
+    paint: {
+      'circle-color': [
+        'step',
+        ['get', 'point_count'],
+        '#51bbd6',
+        100,
+        '#f1f075',
+        750,
+        '#f28cb1',
+      ],
+      'circle-radius': ['step', ['get', 'point_count'], 20, 100, 30, 750, 40],
+    },
+  };
+
+  public clusterCount = {
+    id: 'cluster-count',
+    type: 'symbol',
+    source: 'sourceCluster',
+    filter: ['has', 'point_count'],
+    layout: {
+      'text-field': '{point_count_abbreviated}',
+      'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+      'text-size': 12,
+    },
+  };
 
   constructor(private ngZone: NgZone, private http: HttpClient) {
-    (mapboxgl as typeof mapboxgl).accessToken = environment.MAPBOX_KEY;
     window.addEventListener('load', () => {
-      this.buildMap();
-      this.map.on('load', () => {
-        this.animate()
-        this.repaint();
-       
-        var corr:any = [];
-        this.map.on('click',(e) => {
-          //this.addModel(`3d-model-${this.layers.length}`, [e.lngLat[0], e.lngLat[1]]  ,UrlsGlb.tipo2);
-          corr.push(e.lngLat)
-          console.clear()
-          console.log(JSON.stringify(corr));
-          console.log(corr.length);
-         
-          
-          //console.log(e..);
-          
+      this.coordenadas.forEach((origin, index) => {
+        this.sourceCluster.data.features.push({
+          type: 'Feature',
+          properties: {
+            id: 'ak16994521',
+            mag: 2.3,
+            time: 1507425650893,
+            felt: null,
+            tsunami: 0,
+          },
+          geometry: {
+            type: 'Point',
+            coordinates: [origin.lng, origin.lat],
+          },
         });
-        
-        
       });
     });
   }
 
-  buildMap() {
-    this.map = new mapboxgl.Map({
-      container: 'map-box-container',
-      style: this.style,
-      zoom: 15,
-      center: this.origin as mapboxgl.LngLatLike,
-      pitch: 68,
-      antialias: true,
-    });
-
+  public buildMap() {
     this.tb = new Threebox(this.map, this.map.getCanvas().getContext('webgl'), {
       defaultLights: true,
       enableSelectingObjects: true, //change this to false to disable 3D objects selection
@@ -71,18 +93,7 @@ export class MapService {
       enableHelpTooltips: true, // remove this to disable default help tooltips for draggin, rotating and measure
     });
     this.map.addControl(new mapboxgl.NavigationControl(), 'top-left');
-
-    //let popup = new  mapboxgl.Popup({closeButton: false}).setHTML(`<h6>HOLA</h6>`).setLngLat(this.origin as mapboxgl.LngLatLike).addTo(this.map);
-    // new mapboxgl.Marker({
-    //   color: 'red',
-    //   draggable: true
-    // }).setLngLat(this.origin as mapboxgl.LngLatLike)
-    // .setPopup(popup)
-    // .addTo(this.map).togglePopup();
-
-    setTimeout(() => {
-      this.map.resize();
-    }, 1000);
+    this.repaint()
   }
 
   addModel(layerId: string, origin: number[], url: string) {
@@ -104,7 +115,6 @@ export class MapService {
       model.castShadow = true;
       this.tb.add(model, layerId);
     });
-    
     this.layers.push(layerId);
   }
 
@@ -131,7 +141,7 @@ export class MapService {
   }
 
   public getCordinates() {
-    return this.http.get<mapboxgl.LngLat[]>('assets/coordenadas3.json');
+    return this.http.get<mapboxgl.LngLat[]>('assets/coordenadas.json');
   }
 
   public save(user): Observable<any> {
@@ -145,13 +155,9 @@ export class MapService {
       type: 'custom',
       renderingMode: '3d',
       onAdd: (map, mbxContext) => {
-        this.getCordinates().subscribe((response) => {
-          console.log(response.length);
-          
-          response.forEach((origin, index) => {
-            const url = this.urls[Math.floor(Math.random() * this.urls.length)];
-            this.addModel(`3d-model-${index}`, [origin.lng, origin.lat], url);
-          });
+        this.coordenadas.forEach((origin, index) => {
+          const url = this.urls[Math.floor(Math.random() * this.urls.length)];
+          this.addModel(`3d-model-${index}`, [origin.lng, origin.lat], url);
         });
       },
       render: (gl, matrix) => {
@@ -159,12 +165,5 @@ export class MapService {
       },
     };
     this.map.addLayer(layer);
-  }
-
-  animate = function () {
-    console.log('s');
-    
-    requestAnimationFrame(animate);
-    //stats.update();
   }
 }

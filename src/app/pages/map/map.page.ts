@@ -1,11 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import * as mapboxgl from 'mapbox-gl';
-import { UrlsGlb } from 'src/app/models/url-glb';
 import { MapService } from 'src/app/services/map.service';
-import { environment } from 'src/environments/environment';
-
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-
 
 @Component({
   selector: 'app-map',
@@ -13,21 +7,27 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
   styleUrls: ['./map.page.scss'],
 })
 export class MapPage implements OnInit {
-
   showLayers: boolean = false;
-
-  constructor(private _mapService: MapService) { 
-    
+  
+  constructor(public _mapService: MapService) {
+    this._mapService.getCordinates().subscribe((coords) => {
+      _mapService.coordenadas = coords;
+    });
   }
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
-  removeAllLayer(){
+  removeAllLayer() {
     this._mapService.removeLayer();
   }
 
-  repaint(){
-    this._mapService.repaint();
+   repaint(){
+     this._mapService.repaint();
+  }
+
+  onMapLoad(map) {
+    this._mapService.map = map;
+    this._mapService.map.resize();
+    this._mapService.buildMap ();
   }
 }

@@ -9,7 +9,6 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class MapService {
-
   private tb: any;
   private urls = [UrlsGlb.tipo2];
   private popup!: mapboxgl.Popup;
@@ -19,8 +18,8 @@ export class MapService {
   public map!: mapboxgl.Map;
   public coordenadas: mapboxgl.LngLat[] = [];
   public origin: number[] = [-73.768153, 6.958787];
-  
-  public sourceCluster:any = {
+
+  public sourceCluster: any = {
     type: 'geojson',
     cluster: true,
     clusterMaxZoom: 14, // Max zoom to cluster points on
@@ -62,6 +61,13 @@ export class MapService {
     },
   };
 
+  geojson:any = {
+    type: 'FeatureCollection',
+    features: [
+      
+    ],
+  };
+
   constructor(private ngZone: NgZone, private http: HttpClient) {
     window.addEventListener('load', () => {
       this.coordenadas.forEach((origin, index) => {
@@ -79,7 +85,23 @@ export class MapService {
             coordinates: [origin.lng, origin.lat],
           },
         });
+
+        const coords = this.coordenadas.sort((a,b) => a.lng)
+        const coord = coords[Math.floor(Math.random() * coords.length)]
+        
+        this.geojson.features.push({
+          type: 'Feature',
+          geometry: {
+            type: 'LineString',
+            properties: {},
+            coordinates: [
+              [origin.lng, origin.lat],
+              [coord.lng, coord.lat]
+            ],
+          },
+        },)
       });
+      
     });
   }
 
@@ -93,7 +115,27 @@ export class MapService {
       enableHelpTooltips: true, // remove this to disable default help tooltips for draggin, rotating and measure
     });
     this.map.addControl(new mapboxgl.NavigationControl(), 'top-left');
-    this.repaint()
+
+    console.log(this.geojson.features);
+    this.map.addSource('LineString', {
+      type: 'geojson',
+      data: this.geojson as any,
+    });
+
+    this.map.addLayer({
+      id: 'LineString',
+      type: 'line',
+      source: 'LineString',
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round',
+      },
+      paint: {
+        'line-color': 'red',
+        'line-width': 2,
+      },
+    });
+    this.repaint();
   }
 
   addModel(layerId: string, origin: number[], url: string) {

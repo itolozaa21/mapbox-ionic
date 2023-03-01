@@ -1,0 +1,10 @@
+<nav id="listing-group" class="listing-group">
+  <ion-button
+    color="custom-buttom"
+    [ngClass]="{ active: mapService.layerId == item.value }"
+    *ngFor="let item of mapTypes"
+
+    (click)="switchLayer(item.value)"
+    >{{ item.name }}</ion-button
+  >
+</nav>

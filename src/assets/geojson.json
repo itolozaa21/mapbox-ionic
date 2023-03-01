@@ -1,0 +1,46 @@
+{
+  "type": "FeatureCollection",
+  "features": [{
+      "properties": {
+        "color": "blue",
+        "OGC_FID": 1
+      },
+      "geometry": {
+        "coordinates": [
+          [-73.76673405807622, 6.961309629090735],
+          [-73.7638030365463, 6.958212066030271]
+        ],
+        "type": "LineString"
+      },
+      "type": "Feature"
+    },
+    {
+      "properties": {
+        "color": "green",
+        "OGC_FID": 2
+      },
+      "geometry": {
+        "coordinates": [
+          [-73.7638030365463, 6.958212066030271],
+          [-73.76160215870887, 6.9561406145437985]
+        ],
+        "type": "LineString"
+      },
+      "type": "Feature"
+    },
+    {
+      "properties": {
+        "color": "red",
+        "OGC_FID": 3
+      },
+      "geometry": {
+        "coordinates": [
+          [-73.76160215870887, 6.9561406145437985],
+          [-73.75822951618333, 6.960232247447578]
+        ],
+        "type": "LineString"
+      },
+      "type": "Feature"
+    }
+  ]
+}

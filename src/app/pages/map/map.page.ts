@@ -27,6 +27,8 @@ export class MapPage implements OnInit {
 
   onMapLoad(map) {
     this._mapService.map = map;
+    console.log(map);
+    
     this._mapService.map.resize();
     this._mapService.buildMap ();
   }

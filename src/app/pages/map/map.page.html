@@ -1,5 +1,5 @@
 <ion-menu contentId="main-content">
-  <ion-header >
+  <ion-header>
     <ion-toolbar color="tertiary">
       <ion-title>Listado</ion-title>
       <ion-button
@@ -27,32 +27,36 @@
       <ion-title>Mapbox - Inkremental</ion-title>
     </ion-toolbar>
   </ion-header>
-  <ion-content [fullscreen]="true" *ngIf="_mapService.sourceCluster.data.features">
+  <ion-content
+    [fullscreen]="true"
+    *ngIf="_mapService.sourceCluster.data.features"
+  >
     <!-- <div class="map" id="map-box-container" ></div> -->
     <mgl-map
       [style]="_mapService.style "
-      [zoom]="[6]"
+      [zoom]="[15]"
       [center]="[_mapService.origin[0], _mapService.origin[1]]"
       [pitch]="[68]"
       (load)="onMapLoad($event)"
     >
-
-    <mgl-layer
-    [id]="_mapService.clusterlayer.id"
-    [type]="_mapService.clusterlayer.type"
-    [paint]="_mapService.clusterlayer.paint"
-    [filter]="_mapService.clusterlayer.filter"
-    [source]="_mapService.sourceCluster"
-  >
-  </mgl-layer>
-  <mgl-layer
-    [id]="_mapService.clusterCount.id"
-    [type]="'symbol'"
-    [filter]="_mapService.clusterCount.filter"
-    [source]="_mapService.sourceCluster"
-    [layout]="_mapService.clusterCount.layout"
-  >
-  </mgl-layer>
+      <mgl-layer
+        [id]="_mapService.clusterlayer.id"
+        [type]="_mapService.clusterlayer.type"
+        [paint]="_mapService.clusterlayer.paint"
+        [filter]="_mapService.clusterlayer.filter"
+        [source]="_mapService.sourceCluster"
+      >
+      </mgl-layer>
+      <mgl-layer
+        [id]="_mapService.clusterCount.id"
+        [type]="'symbol'"
+        [filter]="_mapService.clusterCount.filter"
+        [source]="_mapService.sourceCluster"
+        [layout]="_mapService.clusterCount.layout"
+      >
+      </mgl-layer>
     </mgl-map>
+    <app-layer-menu></app-layer-menu>
+    <app-layer-menu-bottom></app-layer-menu-bottom>
   </ion-content>
 </div>

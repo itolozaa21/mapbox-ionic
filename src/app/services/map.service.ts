@@ -5,6 +5,7 @@ import * as mapboxgl from 'mapbox-gl';
 import { UrlsGlb } from '../models/url-glb';
 import * as Threebox from 'threebox-plugin/src/Threebox';
 import { Observable } from 'rxjs';
+import * as test from '../../assets/geojson.json';
 @Injectable({
   providedIn: 'root',
 })
@@ -14,6 +15,7 @@ export class MapService {
   private popup!: mapboxgl.Popup;
 
   public layers: string[] = [];
+  public layerId = "dark-v11";
   public style = 'mapbox://styles/mapbox/dark-v11';
   public map!: mapboxgl.Map;
   public coordenadas: mapboxgl.LngLat[] = [];
@@ -85,27 +87,22 @@ export class MapService {
             coordinates: [origin.lng, origin.lat],
           },
         });
-
-        const coords = this.coordenadas.sort((a,b) => a.lng)
-        const coord = coords[Math.floor(Math.random() * coords.length)]
-        
-        this.geojson.features.push({
-          type: 'Feature',
-          geometry: {
-            type: 'LineString',
-            properties: {},
-            coordinates: [
-              [origin.lng, origin.lat],
-              [coord.lng, coord.lat]
-            ],
-          },
-        },)
       });
       
     });
   }
 
-  public buildMap() {
+  public async buildMap(repaint: boolean = false) {
+    if(repaint){
+      this.map = new mapboxgl.Map({
+        container: 'mapboxgl-map',
+        style: this.style,
+        zoom: 15,
+        center: [-73.768153, 6.958787],
+        pitch: 68,
+        antialias: true,
+      });
+    }
     this.tb = new Threebox(this.map, this.map.getCanvas().getContext('webgl'), {
       defaultLights: true,
       enableSelectingObjects: true, //change this to false to disable 3D objects selection
@@ -115,26 +112,51 @@ export class MapService {
       enableHelpTooltips: true, // remove this to disable default help tooltips for draggin, rotating and measure
     });
     this.map.addControl(new mapboxgl.NavigationControl(), 'top-left');
-
-    console.log(this.geojson.features);
+    var data: any = test;
+    //console.log(await this.getLines());
     this.map.addSource('LineString', {
       type: 'geojson',
-      data: this.geojson as any,
+      data,
     });
 
     this.map.addLayer({
       id: 'LineString',
       type: 'line',
       source: 'LineString',
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round',
-      },
       paint: {
-        'line-color': 'red',
-        'line-width': 2,
+        'line-color': ['get', 'color'],
+        'line-width': 6,
       },
     });
+
+    this.map.addLayer({
+      'id': 'metro-highlighted',
+      'type': 'line',
+      'source': 'LineString',
+      'paint': {
+          'line-color': ['get', 'color'],
+          'line-width': 8
+      },
+      'filter': ['in', 'OGC_FID', '']
+    });
+
+    this.map.on('mousemove', 'LineString', (e:any) => {
+        if (e.features.length > 0) {
+            var feature = e.features[0];
+            this.map.setFilter('metro-highlighted', ['in', 'OGC_FID', feature.properties.OGC_FID]);
+        }
+    });
+
+    this.map.on('mouseleave', 'LineString', () => {
+        this.map.setFilter('metro-highlighted', ['in', 'OGC_FID', '']);
+        //overlay.style.display = 'none';
+    });
+
+    this.map.on('click',  (e) => {
+        console.log(e.lngLat);
+        
+    });
+
     this.repaint();
   }
 
@@ -170,11 +192,14 @@ export class MapService {
       this.tb.clear(id);
       this.layers = this.layers.filter((layer) => layer != id);
     } else {
-      this.map.removeLayer(layerId);
-      this.layers.forEach((layer) => {
-        this.tb.clear(id);
-      });
-      this.layers = [];
+      if(this.map.getLayer(layerId)){
+        this.map.removeLayer(layerId);
+        this.layers.forEach((layer) => {
+          this.tb.clear(id);
+        });
+        this.layers = [];
+      }
+     
     }
   }
 
@@ -184,6 +209,10 @@ export class MapService {
 
   public getCordinates() {
     return this.http.get<mapboxgl.LngLat[]>('assets/coordenadas.json');
+  }
+
+  public async getLines()  {
+    return  await this.http.get<mapboxgl.LngLat[]>('https://api.staging.taskgo.com.co/serverless/ecopetrol/get-data/?layer=conectividades&column=vol_adj&cluster_name=true&intercept_on=false&lambda=5535156.25&fecha_desde=31-12-2005&fecha_hasta=1-3-2023').toPromise();
   }
 
   public save(user): Observable<any> {
@@ -208,4 +237,11 @@ export class MapService {
     };
     this.map.addLayer(layer);
   }
+	public switchLayer(layer: string) {
+			if (this.layerId != layer) {
+				this.layerId = layer;
+				this.tb.setStyle('mapbox://styles/mapbox/' + this.layerId);
+        this.buildMap(true)
+			}
+	}
 }

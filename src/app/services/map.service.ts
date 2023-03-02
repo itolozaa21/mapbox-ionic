@@ -6,6 +6,7 @@ import { UrlsGlb } from '../models/url-glb';
 import * as Threebox from 'threebox-plugin/src/Threebox';
 import { Observable } from 'rxjs';
 import * as test from '../../assets/geojson.json';
+import { environment } from 'src/environments/environment';
 @Injectable({
   providedIn: 'root',
 })
@@ -15,7 +16,7 @@ export class MapService {
   private popup!: mapboxgl.Popup;
 
   public layers: string[] = [];
-  public layerId = "dark-v11";
+  public layerId = 'dark-v11';
   public style = 'mapbox://styles/mapbox/dark-v11';
   public map!: mapboxgl.Map;
   public coordenadas: mapboxgl.LngLat[] = [];
@@ -63,11 +64,9 @@ export class MapService {
     },
   };
 
-  geojson:any = {
+  geojson: any = {
     type: 'FeatureCollection',
-    features: [
-      
-    ],
+    features: [],
   };
 
   constructor(private ngZone: NgZone, private http: HttpClient) {
@@ -88,21 +87,10 @@ export class MapService {
           },
         });
       });
-      
     });
   }
 
   public async buildMap(repaint: boolean = false) {
-    if(repaint){
-      this.map = new mapboxgl.Map({
-        container: 'mapboxgl-map',
-        style: this.style,
-        zoom: 15,
-        center: [-73.768153, 6.958787],
-        pitch: 68,
-        antialias: true,
-      });
-    }
     this.tb = new Threebox(this.map, this.map.getCanvas().getContext('webgl'), {
       defaultLights: true,
       enableSelectingObjects: true, //change this to false to disable 3D objects selection
@@ -111,7 +99,7 @@ export class MapService {
       enableTooltips: true, // change this to false to disable default tooltips on fill-extrusion and 3D models
       enableHelpTooltips: true, // remove this to disable default help tooltips for draggin, rotating and measure
     });
-    this.map.addControl(new mapboxgl.NavigationControl(), 'top-left');
+
     var data: any = test;
     //console.log(await this.getLines());
     this.map.addSource('LineString', {
@@ -130,31 +118,34 @@ export class MapService {
     });
 
     this.map.addLayer({
-      'id': 'metro-highlighted',
-      'type': 'line',
-      'source': 'LineString',
-      'paint': {
-          'line-color': ['get', 'color'],
-          'line-width': 8
+      id: 'metro-highlighted',
+      type: 'line',
+      source: 'LineString',
+      paint: {
+        'line-color': ['get', 'color'],
+        'line-width': 10,
       },
-      'filter': ['in', 'OGC_FID', '']
+      filter: ['in', 'OGC_FID', ''],
     });
 
-    this.map.on('mousemove', 'LineString', (e:any) => {
-        if (e.features.length > 0) {
-            var feature = e.features[0];
-            this.map.setFilter('metro-highlighted', ['in', 'OGC_FID', feature.properties.OGC_FID]);
-        }
+    this.map.on('mousemove', 'LineString', (e: any) => {
+      if (e.features.length > 0) {
+        var feature = e.features[0];
+        this.map.setFilter('metro-highlighted', [
+          'in',
+          'OGC_FID',
+          feature.properties.OGC_FID,
+        ]);
+      }
     });
 
     this.map.on('mouseleave', 'LineString', () => {
-        this.map.setFilter('metro-highlighted', ['in', 'OGC_FID', '']);
-        //overlay.style.display = 'none';
+      this.map.setFilter('metro-highlighted', ['in', 'OGC_FID', '']);
+      //overlay.style.display = 'none';
     });
 
-    this.map.on('click',  (e) => {
-        console.log(e.lngLat);
-        
+    this.map.on('click', (e) => {
+      console.log(e.lngLat);
     });
 
     this.repaint();
@@ -192,14 +183,13 @@ export class MapService {
       this.tb.clear(id);
       this.layers = this.layers.filter((layer) => layer != id);
     } else {
-      if(this.map.getLayer(layerId)){
+      if (this.map.getLayer(layerId)) {
         this.map.removeLayer(layerId);
         this.layers.forEach((layer) => {
           this.tb.clear(id);
         });
         this.layers = [];
       }
-     
     }
   }
 
@@ -211,8 +201,12 @@ export class MapService {
     return this.http.get<mapboxgl.LngLat[]>('assets/coordenadas.json');
   }
 
-  public async getLines()  {
-    return  await this.http.get<mapboxgl.LngLat[]>('https://api.staging.taskgo.com.co/serverless/ecopetrol/get-data/?layer=conectividades&column=vol_adj&cluster_name=true&intercept_on=false&lambda=5535156.25&fecha_desde=31-12-2005&fecha_hasta=1-3-2023').toPromise();
+  public async getLines() {
+    return await this.http
+      .get<mapboxgl.LngLat[]>(
+        'https://api.staging.taskgo.com.co/serverless/ecopetrol/get-data/?layer=conectividades&column=vol_adj&cluster_name=true&intercept_on=false&lambda=5535156.25&fecha_desde=31-12-2005&fecha_hasta=1-3-2023'
+      )
+      .toPromise();
   }
 
   public save(user): Observable<any> {
@@ -221,6 +215,7 @@ export class MapService {
   }
 
   public repaint() {
+    this.removeLayer()
     const layer: mapboxgl.CustomLayerInterface = {
       id: '3d-model',
       type: 'custom',
@@ -237,11 +232,54 @@ export class MapService {
     };
     this.map.addLayer(layer);
   }
-	public switchLayer(layer: string) {
-			if (this.layerId != layer) {
-				this.layerId = layer;
-				this.tb.setStyle('mapbox://styles/mapbox/' + this.layerId);
-        this.buildMap(true)
-			}
-	}
+
+  public async switchLayer(layer: string) {
+    if (this.layerId != layer) {
+      this.layerId = layer;
+      this.switchBaseMap(this.map,layer);
+      setTimeout(() => {
+        this.repaint()
+      }, 100);
+      
+    }
+  }
+
+  async  switchBaseMap(map, styleID) {
+    const response = await fetch(
+      `https://api.mapbox.com/styles/v1/mapbox/${styleID}?access_token=pk.eyJ1IjoiaXRvbG96YWEyMSIsImEiOiJjbGNoMG1yZ2k4ZXB2M29wbGRta2l6dzVkIn0.0M_onIdklkiLkiMnmWEgGw`
+    );
+    const newStyle =  await response.json();
+  
+    const currentStyle = map.getStyle();
+    // ensure any sources from the current style are copied across to the new style
+    newStyle.sources = Object.assign({},
+      currentStyle.sources,
+      newStyle.sources
+    );
+  
+    // find the index of where to insert our layers to retain in the new style
+    let labelIndex = newStyle.layers.findIndex((el) => {
+      return el.id == 'waterway-label';
+    });
+  
+    // default to on top
+    if (labelIndex === -1) {
+      labelIndex = newStyle.layers.length;
+    }
+    const appLayers = currentStyle.layers.filter((el) => {
+      // app layers are the layers to retain, and these are any layers which have a different source set
+      return (
+        el.source &&
+        el.source != 'mapbox://mapbox.satellite' &&
+        el.source != 'mapbox' &&
+        el.source != 'composite'
+      );
+    });
+    newStyle.layers = [
+      ...newStyle.layers.slice(0, labelIndex),
+      ...appLayers,
+      ...newStyle.layers.slice(labelIndex, -1),
+    ];
+    map.setStyle(newStyle);
+  }
 }

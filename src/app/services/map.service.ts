@@ -7,6 +7,9 @@ import * as Threebox from 'threebox-plugin/src/Threebox';
 import { Observable } from 'rxjs';
 import * as test from '../../assets/geojson.json';
 import { environment } from 'src/environments/environment';
+import * as THREE from 'three';
+import * as cssw from 'three-css2drender';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -101,16 +104,18 @@ export class MapService {
     });
 
     var data: any = test;
+    console.log();
+
     //console.log(await this.getLines());
-    this.map.addSource('LineString', {
+    this.map.addSource('Fallas', {
       type: 'geojson',
       data,
     });
 
     this.map.addLayer({
-      id: 'LineString',
+      id: 'fallas',
       type: 'line',
-      source: 'LineString',
+      source: 'Fallas',
       paint: {
         'line-color': ['get', 'color'],
         'line-width': 6,
@@ -120,7 +125,7 @@ export class MapService {
     this.map.addLayer({
       id: 'metro-highlighted',
       type: 'line',
-      source: 'LineString',
+      source: 'Fallas',
       paint: {
         'line-color': ['get', 'color'],
         'line-width': 10,
@@ -128,7 +133,7 @@ export class MapService {
       filter: ['in', 'OGC_FID', ''],
     });
 
-    this.map.on('mousemove', 'LineString', (e: any) => {
+    this.map.on('mousemove', 'fallas', (e: any) => {
       if (e.features.length > 0) {
         var feature = e.features[0];
         this.map.setFilter('metro-highlighted', [
@@ -139,15 +144,18 @@ export class MapService {
       }
     });
 
-    this.map.on('mouseleave', 'LineString', () => {
+    this.map.on('mouseleave', 'fallas', () => {
       this.map.setFilter('metro-highlighted', ['in', 'OGC_FID', '']);
       //overlay.style.display = 'none';
     });
 
     this.map.on('click', (e) => {
-      console.log(e.lngLat);
+      console.log(e);
+      this.tb.queryRenderedFeatures(e.point);
+      console.log(this.tb.queryRenderedFeatures(e.point));
     });
 
+    this.map.on('SelectedFeatureChange', this.onSelectedFeatureChange)
     this.repaint();
   }
 
@@ -165,9 +173,19 @@ export class MapService {
     this.tb.loadObj(options, (model: any) => {
       model.setCoords(origin);
       //model.addEventListener('ObjectMouseOver', this.onObjectMouseOver, false);
-      model.addTooltip('This is a custom tooltip', false);
+      model.addTooltip('This is a custom tooltip', true);
+      model.addTooltip('TEST', false);
       //model.set({ rotation: { x: 0, y: 0, z: 11520 }, duration: 20000 });
       model.castShadow = true;
+      console.log(model);
+
+      //model.getObjectByName('scaleGroup').children[1].visible = true;
+      //model.getObjectByName('scaleGroup').children[1].
+      //onsole.log(" model.getObjectByName('scaleGroup')",  model.getObjectByName('scaleGroup').children[1]);
+
+      //model.getObjectByName('scaleGroup').children[0].children[0].children[0].material.color.setHex(0x00FF00)
+      
+
       this.tb.add(model, layerId);
     });
     this.layers.push(layerId);
@@ -178,7 +196,7 @@ export class MapService {
     console.log('ObjectMouseOver: ', e);
   }
 
-  public removeLayer(id?: string, layerId: string = '3d-model') {
+  public removeLayer(id?:string, layerId: string = '3d-model') {
     if (id) {
       this.tb.clear(id);
       this.layers = this.layers.filter((layer) => layer != id);
@@ -186,11 +204,16 @@ export class MapService {
       if (this.map.getLayer(layerId)) {
         this.map.removeLayer(layerId);
         this.layers.forEach((layer) => {
-          this.tb.clear(id);
+          this.tb.clear(layer);
         });
         this.layers = [];
       }
     }
+  }
+  
+
+  public setVisibilityLayer(show:boolean, layerId: string = '3d-model') {
+    show ? this.map.setLayoutProperty(layerId, 'visibility', 'visible') : this.map.setLayoutProperty(layerId, 'visibility', 'none');
   }
 
   getRandomInt(max: number) {
@@ -215,7 +238,7 @@ export class MapService {
   }
 
   public repaint() {
-    this.removeLayer()
+    this.removeLayer();
     const layer: mapboxgl.CustomLayerInterface = {
       id: '3d-model',
       type: 'custom',
@@ -236,32 +259,32 @@ export class MapService {
   public async switchLayer(layer: string) {
     if (this.layerId != layer) {
       this.layerId = layer;
-      this.switchBaseMap(this.map,layer);
+      this.switchBaseMap(this.map, layer);
       setTimeout(() => {
-        this.repaint()
-      }, 100);
-      
+        this.repaint();
+      }, 500);
     }
   }
 
-  async  switchBaseMap(map, styleID) {
+  async switchBaseMap(map, styleID) {
     const response = await fetch(
       `https://api.mapbox.com/styles/v1/mapbox/${styleID}?access_token=pk.eyJ1IjoiaXRvbG96YWEyMSIsImEiOiJjbGNoMG1yZ2k4ZXB2M29wbGRta2l6dzVkIn0.0M_onIdklkiLkiMnmWEgGw`
     );
-    const newStyle =  await response.json();
-  
+    const newStyle = await response.json();
+
     const currentStyle = map.getStyle();
     // ensure any sources from the current style are copied across to the new style
-    newStyle.sources = Object.assign({},
+    newStyle.sources = Object.assign(
+      {},
       currentStyle.sources,
       newStyle.sources
     );
-  
+
     // find the index of where to insert our layers to retain in the new style
     let labelIndex = newStyle.layers.findIndex((el) => {
       return el.id == 'waterway-label';
     });
-  
+
     // default to on top
     if (labelIndex === -1) {
       labelIndex = newStyle.layers.length;
@@ -282,4 +305,11 @@ export class MapService {
     ];
     map.setStyle(newStyle);
   }
+
+  onSelectedFeatureChange(ev: any): void {
+    console.log("TEST");
+    
+  }
 }
+
+

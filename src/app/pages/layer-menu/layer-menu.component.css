@@ -1,55 +1,50 @@
 .listing-group {
-    font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
-    font-weight: 600;
-    position: absolute;
-    top: 10%;
-    right: 10px;
-    z-index: 1;
-    border-radius: 3px;
-    max-width: 20%;
-    color: #fff;
-    border: 1px solid white;
+  font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+  font-weight: 600;
+  position: absolute;
+  top: 10%;
+  right: 10px;
+  z-index: 1;
+  border-radius: 3px;
+  width: 40vh;
+  max-width: 40%;
+  color: #fff;
+ 
+  box-shadow: 5px 4px 5px -1px rgb(0 0 0 / 71%);
+  background-color: rgb(19, 46, 62, 0.85);
+}
+
+.item {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin: 10px !important;
+  visibility: inherit;
+}
+
+ion-col {
   
-   
-  
-  }
-  
-  .listing-group input[type='checkbox']:first-child+label {
-    border-radius: 3px 3px 0 0;
-  }
-  
-  .listing-group label:last-child {
-    border-radius: 0 0 3px 3px;
-    border: none;
-  }
-  
-  .listing-group input[type='checkbox'] {
-    display: none;
-  }
-  
-  .listing-group input[type='checkbox']+label {
-    background-color: #132E3E;
-    display: block;
-    cursor: pointer;
-    padding: 10px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.25);
-  }
-  
-  .listing-group input[type='checkbox']+label {
-    background-color: #132E3E;
-    text-transform: capitalize;
-  }
-  
-  .listing-group input[type='checkbox']+label:hover,
-  .listing-group input[type='checkbox']:checked+label {
-    background-color: #132E3E;
-  }
-  
-  .listing-group input[type='checkbox']:checked+label:before {
-    content: '✔';
-    margin-right: 5px;
-  }
-  
-  .title-list{
-    margin: 20px;
-  }
+  color: #fff;
+  text-align: center;
+}
+
+ion-checkbox {
+  margin-right: 5px;
+}
+
+.close-button{
+  position: absolute;
+  right: 10px;
+}
+
+
+ion-grid{
+  background-color: rgb(0, 0, 0, 0.45);
+  padding: 0px;
+  height: 38px;
+  border-bottom: 1px solid white;
+}
+
+ion-checkbox{
+  background-color: red;
+}

@@ -17,8 +17,9 @@ export class MapPage implements OnInit {
 
   ngOnInit() {}
 
-  removeAllLayer() {
-    this._mapService.removeLayer();
+  setVisibililty() {
+    this._mapService.setVisibilityLayer(this.showLayers);
+    this.showLayers = !this.showLayers;
   }
 
    repaint(){

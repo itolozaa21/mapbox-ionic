@@ -6,7 +6,7 @@
         shape="round"
         slot="end"
         color="dark"
-        (click)="showLayers ? repaint() : removeAllLayer(); showLayers = !showLayers;"
+        (click)="setVisibililty()"
       >
         <ion-icon [name]="showLayers ? 'eye' :'eye-off'" slot="end"></ion-icon>
         {{showLayers ? 'Mostrar' : 'Ocultar'}}

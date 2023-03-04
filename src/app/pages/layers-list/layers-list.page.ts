@@ -18,7 +18,7 @@ export class LayersListPage implements OnInit {
     return this._mapService.layers
   }
 
-  removeLayer(id?: string){
+  removeLayer(id: string){
     this._mapService.removeLayer(id);
   }
 }

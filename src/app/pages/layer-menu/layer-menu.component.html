@@ -1,19 +1,21 @@
-<nav id="listing-group" class="listing-group">
-  <ion-item>
-    <ion-label>CAPAS</ion-label>
-  </ion-item>
-  <input type="checkbox" id="scrollZoom" checked="checked" />
-  <label for="scrollZoom">Scroll zoom</label>
-  <input type="checkbox" id="boxZoom" checked="checked" />
-  <label for="boxZoom">Box zoom</label>
-  <input type="checkbox" id="dragRotate" checked="checked" />
-  <label for="dragRotate">Drag rotate</label>
-  <input type="checkbox" id="dragPan" checked="checked" />
-  <label for="dragPan">Drag pan</label>
-  <input type="checkbox" id="keyboard" checked="checked" />
-  <label for="keyboard">Keyboard</label>
-  <input type="checkbox" id="doubleClickZoom" checked="checked" />
-  <label for="doubleClickZoom">Double click zoom</label>
-  <input type="checkbox" id="touchZoomRotate" checked="checked" />
-  <label for="touchZoomRotate">Touch zoom rotate</label>
-</nav>
+<div class="container">
+  <nav id="listing-group" class="listing-group">
+    <!-- <div class="title">
+      <ion-label>CAPAS</ion-label>
+    </div> -->
+    <ion-grid>
+      <ion-row>
+        <ion-col></ion-col>
+        <ion-col>CAPAS</ion-col>
+        <ion-col >
+          <span class="close-button">X</span>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+    <div class="item" *ngFor="let layer of layers">
+      <!-- <input type="checkbox" [(ngModel)]="layer.selected" name="selected" (ngModelChange)="mapService.setVisibilityLayer(layer.selected,layer.id)"> -->
+      <ion-checkbox slot="start" [(ngModel)]="layer.selected" (ngModelChange)="mapService.setVisibilityLayer(layer.selected,layer.id)"></ion-checkbox> 
+      <ion-label slot="start" >{{layer.name}}</ion-label>
+    </div>
+  </nav>
+</div>

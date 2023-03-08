@@ -79,10 +79,6 @@ export class MapService {
           type: 'Feature',
           properties: {
             id: 'ak16994521',
-            mag: 2.3,
-            time: 1507425650893,
-            felt: null,
-            tsunami: 0,
           },
           geometry: {
             type: 'Point',
@@ -146,17 +142,43 @@ export class MapService {
 
     this.map.on('mouseleave', 'fallas', () => {
       this.map.setFilter('metro-highlighted', ['in', 'OGC_FID', '']);
-      //overlay.style.display = 'none';
     });
 
-    this.map.on('click', (e) => {
-      console.log(e);
-      this.tb.queryRenderedFeatures(e.point);
-      console.log(this.tb.queryRenderedFeatures(e.point));
-    });
-
-    this.map.on('SelectedFeatureChange', this.onSelectedFeatureChange)
+    this.map.on('zoomend', (e) => {
+      if(this.map.getZoom() <= 14 ){
+        this.tb.world.children.forEach((element) => {
+          element.children[0].children.forEach((children) => {
+            if(children.type == 'Object3D'){
+              children.visible = false;
+            }
+          });
+        })
+      }else{
+        this.tb.world.children.forEach((element) => {
+          element.children[0].children.forEach((children) => {
+            if(children.type == 'Object3D'){
+              children.visible = true;
+            }
+          });
+        })
+      }
+    })
     this.repaint();
+  }
+
+  changeTextButton(event) {
+    console.log('ASS', event);
+  }
+
+  showLabels(){
+    this.tb.world.children.forEach((element) => {
+      element.children[0].children.forEach((children) => {
+        if(children.type == 'Object3D'){
+          children.visible = !children.visible;
+        }
+      });
+    })
+    this.map.triggerRepaint()
   }
 
   addModel(layerId: string, origin: number[], url: string) {
@@ -173,18 +195,50 @@ export class MapService {
     this.tb.loadObj(options, (model: any) => {
       model.setCoords(origin);
       //model.addEventListener('ObjectMouseOver', this.onObjectMouseOver, false);
-      model.addTooltip('This is a custom tooltip', true);
-      model.addTooltip('TEST', false);
+      // model.addTooltip('This is a custom tooltip', true);
+      // model.addTooltip('TEST', false);
       //model.set({ rotation: { x: 0, y: 0, z: 11520 }, duration: 20000 });
       model.castShadow = true;
-      console.log(model);
+      //console.log(model);
 
-      //model.getObjectByName('scaleGroup').children[1].visible = true;
-      //model.getObjectByName('scaleGroup').children[1].
-      //onsole.log(" model.getObjectByName('scaleGroup')",  model.getObjectByName('scaleGroup').children[1]);
+      // var label = model.drawLabelHTML(this.getHTML('Prueba'), true, model.anchor, 0);
+      // var label2 = model.drawLabelHTML(this.getHTML('Prueba2'), true, model.anchor, 0);
+      // model.addCSS2D(this.getHTML('Prueba22'), 'test',model.anchor ,1)
+      //label.position.set(0,100, 0);
 
-      //model.getObjectByName('scaleGroup').children[0].children[0].children[0].material.color.setHex(0x00FF00)
+      console.log();
       
+      this.drawLabelHTML(
+        model,
+        this.getHTML('P2GRSSFS-1'),
+        true,
+        model.anchor,
+        1,
+        'label-0'
+      );
+
+      let label = this.drawLabelHTML(
+        model,
+        this.getHTML('LA2542424'),
+        true,
+        model.anchor,
+        1,
+        'label-1'
+      );
+
+      let label2 = this.drawLabelHTML(
+        model,
+        this.getHTML('P2GRSSFS'),
+        true,
+        model.anchor,
+        1,
+        'label-2'
+      );
+
+      label2.position.set(100, 0, 0);
+      label.position.set(0, 100, 0);
+
+      //console.log("MODEL", label);
 
       this.tb.add(model, layerId);
     });
@@ -196,7 +250,7 @@ export class MapService {
     console.log('ObjectMouseOver: ', e);
   }
 
-  public removeLayer(id?:string, layerId: string = '3d-model') {
+  public removeLayer(id?: string, layerId: string = '3d-model') {
     if (id) {
       this.tb.clear(id);
       this.layers = this.layers.filter((layer) => layer != id);
@@ -210,10 +264,11 @@ export class MapService {
       }
     }
   }
-  
 
-  public setVisibilityLayer(show:boolean, layerId: string = '3d-model') {
-    show ? this.map.setLayoutProperty(layerId, 'visibility', 'visible') : this.map.setLayoutProperty(layerId, 'visibility', 'none');
+  public setVisibilityLayer(show: boolean, layerId: string = '3d-model') {
+    show
+      ? this.map.setLayoutProperty(layerId, 'visibility', 'visible')
+      : this.map.setLayoutProperty(layerId, 'visibility', 'none');
   }
 
   getRandomInt(max: number) {
@@ -307,9 +362,40 @@ export class MapService {
   }
 
   onSelectedFeatureChange(ev: any): void {
-    console.log("TEST");
-    
+    console.log('TEST');
+  }
+
+  getHTML(text: string) {
+    return `<div style="color:white; ">
+      <span >${text}</span>
+    </div>`;
+  }
+
+  drawLabelHTML(
+    obj,
+    HTMLElement,
+    visible = false,
+    center,
+    height = 0.5,
+    labelName = 'label',
+    cssClass = 'custom-text'
+  ) {
+    let divLabel = this.drawLabelHTMLGenerate(HTMLElement, cssClass);
+    let label = obj.addCSS2D(divLabel, labelName, center, height); //label.position.set(((-size.x * 0.5) - obj.model.position.x - center.x + bottomLeft.x), ((-size.y * 0.5) - obj.model.position.y - center.y + bottomLeft.y), size.z * 0.5); //middle-centered
+    label.alwaysVisible = visible;
+    label.visible = visible;
+    return label;
+  }
+
+  drawLabelHTMLGenerate(HTMLElement, cssClass: string) {
+    let div = document.createElement('div');
+    div.className += cssClass;
+    // [jscastro] create a div [TODO] analize if must be moved
+    if (typeof HTMLElement == 'string') {
+      div.innerHTML = HTMLElement;
+    } else {
+      div.innerHTML = HTMLElement.outerHTML;
+    }
+    return div;
   }
 }
-
-

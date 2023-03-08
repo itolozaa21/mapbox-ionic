@@ -17,5 +17,9 @@
       <ion-checkbox slot="start" [(ngModel)]="layer.selected" (ngModelChange)="mapService.setVisibilityLayer(layer.selected,layer.id)"></ion-checkbox> 
       <ion-label slot="start" >{{layer.name}}</ion-label>
     </div>
+    <!-- <div class="item" >
+      <ion-checkbox slot="start" [(ngModel)]="showLabel" (ngModelChange)="mapService.showLabels()"></ion-checkbox> 
+      <ion-label slot="start" >Mostrar propiedades de la capa</ion-label>
+    </div> -->
   </nav>
 </div>

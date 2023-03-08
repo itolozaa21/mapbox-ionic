@@ -25,6 +25,7 @@ export class LayerMenuComponent implements OnInit {
     },
   ];
 
+  showLabel: boolean = true;
 
   constructor(public mapService: MapService){
 

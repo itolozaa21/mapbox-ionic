@@ -1,6 +1,6 @@
 'use strict';
 import { HttpClient } from '@angular/common/http';
-import { Injectable, NgZone } from '@angular/core';
+import { ElementRef, Injectable, NgZone, ViewChild } from '@angular/core';
 import * as mapboxgl from 'mapbox-gl';
 import { UrlsGlb } from '../models/url-glb';
 import * as Threebox from 'threebox-plugin/src/Threebox';
@@ -9,14 +9,15 @@ import * as test from '../../assets/geojson.json';
 import { environment } from 'src/environments/environment';
 import * as THREE from 'three';
 import * as cssw from 'three-css2drender';
+import { LabelCustomComponent } from '../pages/map/label-custom/label-custom.component';
 
 @Injectable({
   providedIn: 'root',
 })
 export class MapService {
+  @ViewChild(LabelCustomComponent) labelComponent!: LabelCustomComponent;
   private tb: any;
   private urls = [UrlsGlb.tipo2];
-  private popup!: mapboxgl.Popup;
 
   public layers: string[] = [];
   public layerId = 'dark-v11';
@@ -100,8 +101,6 @@ export class MapService {
     });
 
     var data: any = test;
-    console.log();
-
     //console.log(await this.getLines());
     this.map.addSource('Fallas', {
       type: 'geojson',
@@ -145,24 +144,24 @@ export class MapService {
     });
 
     this.map.on('zoomend', (e) => {
-      if(this.map.getZoom() <= 14 ){
+      if (this.map.getZoom() <= 14) {
         this.tb.world.children.forEach((element) => {
           element.children[0].children.forEach((children) => {
-            if(children.type == 'Object3D'){
+            if (children.type == 'Object3D') {
               children.visible = false;
             }
           });
-        })
-      }else{
+        });
+      } else {
         this.tb.world.children.forEach((element) => {
           element.children[0].children.forEach((children) => {
-            if(children.type == 'Object3D'){
+            if (children.type == 'Object3D') {
               children.visible = true;
             }
           });
-        })
+        });
       }
-    })
+    });
     this.repaint();
   }
 
@@ -170,15 +169,15 @@ export class MapService {
     console.log('ASS', event);
   }
 
-  showLabels(){
+  showLabels() {
     this.tb.world.children.forEach((element) => {
       element.children[0].children.forEach((children) => {
-        if(children.type == 'Object3D'){
+        if (children.type == 'Object3D') {
           children.visible = !children.visible;
         }
       });
-    })
-    this.map.triggerRepaint()
+    });
+    this.map.triggerRepaint();
   }
 
   addModel(layerId: string, origin: number[], url: string) {
@@ -199,47 +198,23 @@ export class MapService {
       // model.addTooltip('TEST', false);
       //model.set({ rotation: { x: 0, y: 0, z: 11520 }, duration: 20000 });
       model.castShadow = true;
-      //console.log(model);
 
-      // var label = model.drawLabelHTML(this.getHTML('Prueba'), true, model.anchor, 0);
-      // var label2 = model.drawLabelHTML(this.getHTML('Prueba2'), true, model.anchor, 0);
-      // model.addCSS2D(this.getHTML('Prueba22'), 'test',model.anchor ,1)
-      //label.position.set(0,100, 0);
+      const labels = [
+        { name: 'P2GRSSFS-1', position: { x: 100, y: 0, z: 0 } },
+        { name: 'LA2542424-2', position: { x: 0, y: 0, z: 200 } },
+        { name: 'LA2542424', position: { x: 0, y: 100, z: 0 } },
+      ];
 
-      console.log();
-      
-      this.drawLabelHTML(
-        model,
-        this.getHTML('P2GRSSFS-1'),
-        true,
-        model.anchor,
-        1,
-        'label-0'
-      );
-
-      let label = this.drawLabelHTML(
-        model,
-        this.getHTML('LA2542424'),
-        true,
-        model.anchor,
-        1,
-        'label-1'
-      );
-
-      let label2 = this.drawLabelHTML(
-        model,
-        this.getHTML('P2GRSSFS'),
-        true,
-        model.anchor,
-        1,
-        'label-2'
-      );
-
-      label2.position.set(100, 0, 0);
-      label.position.set(0, 100, 0);
-
-      //console.log("MODEL", label);
-
+      labels.forEach((data, index) => {
+        const label = this.drawLabelHTML(
+          model,
+          this.getHTML(data.name, index),
+          model.anchor,
+          index.toString()
+        );
+        const { x, y, z } = data.position;
+        label.position.set(x, y, z);
+      });
       this.tb.add(model, layerId);
     });
     this.layers.push(layerId);
@@ -365,20 +340,23 @@ export class MapService {
     console.log('TEST');
   }
 
-  getHTML(text: string) {
-    return `<div style="color:white; ">
-      <span >${text}</span>
+  getHTML(text: string, index: number) {
+    return `<div >
+      <span  style="display: flex;flex-direction: row;align-content: center;"> 
+      
+        <span  class="texto-visible-${index}">${text}</span>
+      </span>
     </div>`;
   }
 
   drawLabelHTML(
     obj,
     HTMLElement,
-    visible = false,
     center,
-    height = 0.5,
     labelName = 'label',
-    cssClass = 'custom-text'
+    cssClass = 'custom-text',
+    visible = true,
+    height = 0.5
   ) {
     let divLabel = this.drawLabelHTMLGenerate(HTMLElement, cssClass);
     let label = obj.addCSS2D(divLabel, labelName, center, height); //label.position.set(((-size.x * 0.5) - obj.model.position.x - center.x + bottomLeft.x), ((-size.y * 0.5) - obj.model.position.y - center.y + bottomLeft.y), size.z * 0.5); //middle-centered
@@ -389,13 +367,22 @@ export class MapService {
 
   drawLabelHTMLGenerate(HTMLElement, cssClass: string) {
     let div = document.createElement('div');
+    div.setAttribute('style', 'color:white');
     div.className += cssClass;
+
     // [jscastro] create a div [TODO] analize if must be moved
     if (typeof HTMLElement == 'string') {
       div.innerHTML = HTMLElement;
     } else {
       div.innerHTML = HTMLElement.outerHTML;
     }
+
+    div.addEventListener('mouseover', (e) => {
+      console.log("E", e);
+      console.log();
+      const texto = document.querySelector('.texto-visible-1')
+      texto?.setAttribute('style', 'display:block')
+    })
     return div;
   }
 }

@@ -12,8 +12,9 @@ import { NgxMapboxGLModule } from 'ngx-mapbox-gl';
 import { environment } from 'src/environments/environment';
 import { LayerMenuModule } from '../layer-menu/layer-menu.module';
 import { LayerMenuBottomModule } from '../layer-menu-bottom/layer-menu-bottom.module';
+import { LabelCustomComponent } from './label-custom/label-custom.component';
 @NgModule({
-  declarations: [MapPage],
+  declarations: [MapPage, LabelCustomComponent],
   imports: [
     CommonModule,
     FormsModule,
